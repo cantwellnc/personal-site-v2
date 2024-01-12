@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<!--[if lt IE 7 ]><html class="ie ie6" lang="en"><![endif]-->
+<!--[if IE 7 ]><html class="ie ie7" lang="en"><![endif]-->
+<!--[if IE 8 ]><html class="ie ie8" lang="en"><![endif]-->
+<!--[if (gte IE 9)|!(IE)]><!--><html lang="en"><!--<![endif]-->
+<head>
+    <!-- Website Template designed by www.downloadwebsitetemplates.co.uk -->
+    <!-- Modified to fit Cryogen.-->
+    <meta charset="UTF-8">
+    
+    <title>Daniel Cantwell</title>
+    
+    <meta name="description" content="&quot;I say now, as I said then, that a [person] should keep [their] little 
+                                brain-attic stocked with all the furniture that [they] is likely to use,
+                                and the rest they can put away in the lumber-room of their library, where 
+                                they can get it if they want it&quot; - Sherlock Holmes, mostly.">
+    <meta name="keywords" content="">
+    
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="images/ico/apple-touch-icon-144.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="images/ico/apple-touch-icon-114.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="images/ico/apple-touch-icon-72.png">
+    <link rel="apple-touch-icon-precomposed" href="images/ico/apple-touch-icon-57.png">
+    <link rel="shortcut icon" href="images/ico/favicon.png">
+    <!--[if IE]><![endif]-->
+    <link href="/personal-site-v2/css/buttons.css" rel="stylesheet" type="text/css" />
+    <link href="/personal-site-v2/css/menu.css" rel="stylesheet" type="text/css" />
+    <link href="/personal-site-v2/css/reset.css" rel="stylesheet" type="text/css" />
+    <link href="/personal-site-v2/css/style.css" rel="stylesheet" type="text/css" />
+    <link href="/personal-site-v2/css/typography.css" rel="stylesheet" type="text/css" />
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/tomorrow-night-eighties.min.css">
+    <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+</head>
+<body>
+
+<div id="left">
+
+    <p id="logo">
+        <a title="Daniel Cantwell" href="/personal-site-v2/">
+            <span class="fa fa-rocket"></span>
+            <span class="text">Daniel Cantwell</span>
+        </a>
+    </p>
+
+    <div id="menucont" class="bodycontainer clearfix">
+        <div class="menutitle">
+            <p><span class="fa fa-reorder"></span><strong>Menu</strong></p>
+        </div>
+        <ul class="menu">
+            <li  class="active" ><a title="Home" href="/personal-site-v2/">Home</a></li>
+            <li ><a title="Archives" href="/personal-site-v2/archives/">Archives</a></li>
+            
+            <li ><a title="Tags" href="/personal-site-v2/tags/">Tags</a></li>
+            
+            
+            <li >
+                <a href="/personal-site-v2/pages-output/about/">About</a>
+            </li>
+            
+            <li><a title="RSS" href="/personal-site-v2/feed.xml">RSS</a></li>
+        </ul>
+    </div>
+
+    <div id="socialmedia" class="clearfix">
+        <ul>
+            <li><a title="GitHub" href="https://github.com/cantwellnc" rel="external"><span class="fa fa-github"></span></a></li>
+            <li><a title="LinkedIn" href="https://www.linkedin.com/in/daniel-cantwell/" rel="external"><span class="fa fa-linkedin"></span></a></li>
+        </ul>
+    </div>
+
+</div>
+
+<div id="right" class="clearfix">
+    
+<div id="post">
+    <div class="post-header">
+    <div id="post-meta" class="row">
+        <strong>January 12, 2024</strong>
+        
+    </div>
+    <h1>Questions in Questions</h1>
+</div>
+<div>
+    <ol class="toc"><li><a href="#setting-up">Setting Up</a></li><li><a href="#a-challenge">A Challenge</a></li><li><a href="#enter-lisp">Enter: LISP</a></li><li><a href="#powering-down">Powering Down</a></li></ol>
+    <!-- # Questions in Questions --><p>When someone asks a true/false question like "Is this book any good?", it is almost never atomic; it can usually be broken down into subquestions.</p><ul><li>is the narrative voice persuading?</li><li>does that asker enjoy the subject material?</li><li>is the story compelling?</li><li>...</li></ul><p>The combination of answers to each of these questions yields the answer to "Is this book any good?". Each of these sub-questions is also known as a <em>predicate</em>: a statement which is true or false.</p><p>If someone gave you two predicates (or more generally, a collection of them), how would you go about combining them?</p><p>If I gave you one predicate composed of many sub-predicates, could you switch out these sub-predicates for some other ones? For instance, what if the reader changed their mind about needing a strong narrative voice, and decided that they didn't want to consider that as a factor at all?</p><h2 id="setting-up">Setting Up</h2><p>A predicate is a function of the form <code>T -&gt; bool</code>. It takes some object and tests whether or not it satisfies some boolean condition.</p><pre><code class="python">    Predicate = Callable[[T], bool]
+    pos_len: Predicate = lambda x: len(x) &gt; 0 
+    a_prefixed: Predicate = lambda x: x.startswith("a")
+
+</code></pre><p>We'll restrict to predicates of a fixed type <code>T</code>, since it is pretty pointless to ask questions about properties of a thing that doesn't have that thing.
+(ex: the predicate <code>pos_len</code> applied to an <code>5</code> doesn't even make sense, since integers have no intrinsic concept of length).</p><p>You may have learned in school that you can:</p><ol><li><code>and</code> two predicates</li><li><code>or</code> two predicates</li><li><code>not</code> a single predicate</li></ol><pre><code class="python">    def true(x): 
+        # the trivial predicate
+        return True
+
+    def and_(p1: Predicate = true, p2: Predicate = true) -&gt; Predicate: 
+        # values are defaulted to True so that called this with a single argument can still 
+        # produce a coherent answer
+        return lambda x: p1(x) and p2(x)
+
+    def or_(p1: Predicate = true, p2: Predicate = true) -&gt; Predicate: 
+        return lambda x: p1(x) or p2(x)
+
+    def not_(p: Predicate) -&gt; Predicate: 
+        return lambda x: not p(x)
+</code></pre><p>Since we're modeling each predicate as a function, how do we usually combine functions to build more complicated ones?</p><p>One typical way is function composition.</p><pre><code class="python">    from itertools import chain
+    from functools import reduce
+
+    def comp(f, *fns):
+        # assumes unary fns
+        # composes from the outside in: comp(f, g, h)(x) == f(g(h(x)))
+        rfs = list(chain([f], fns))
+        rfs.reverse()
+        def compd(*args, **kwargs):
+            return reduce(
+                lambda result, fn: fn(result),
+                rfs[1:],
+                rfs[0](*args, **kwargs))
+
+        return comp
+</code></pre><p>But you can't just compose predicates like normal math functions. Their type signatures don't match!</p><p>You can't compose uses of <code>and_</code> and <code>or_</code> together either, because they both take two predicates and only return one!</p><p>Getting something composable means that we want something with a signature like <code>Predicate -&gt; Predicate</code>; a gadget that takes a predicate and returns a new predicate, but modified in some way. Then we could compose to our heart's content to build complex predicates out of simple ones!</p><p>An immediate example we can see is partially applying one of <code>and_</code>, <code>or_</code>.</p><pre><code class="python">    from functools import partial
+
+    and_pos_length = partial(and_, pos_len)
+    # Predicate -&gt; Predicate
+</code></pre><p>Now we have our hands on one of these things. Let's call it a predicate transformer. This particular one takes in some predicate, and constrains it with an additional additional predicate.</p><p>We can do a similar thing with <code>or_</code>:</p><pre><code class="python">    or_pos_length = partial(or_, pos_len)
+    # Predicate -&gt; Predicate
+</code></pre><p>This takes some predicate <code>P</code> and loosens it such that <code>P</code> can be True or the item in question can have positive length.</p><p>Now we can freely comp these:</p><pre><code class="python">    and_a_prefixed = partial(and_, a_prefixed)
+    and_b_suffixed = partial(and_, lambda x: x.endswith("b"))
+    a_and_pos_length_and_b_er = comp(and_pos_length, and_a_prefixed, and_b_suffixed)
+    # type: Predicate -&gt; Predicate
+</code></pre><p>In order to actually evaluate the base predicate represented by <code>a_and_pos_length_and_b_er</code> on an input string, we need to pass it a starting predicate in order to get the predicate we want to evaluate. In this case, we are <strong>only</strong> and-ing predicates together, so we should feed the predicate transformer the trivial predicate <code>true</code> that we defined earlier:</p><pre><code class="python">    a_and_pos_length_and_b(true)("ab") # True
+    a_and_pos_length_and_b(true)("abc") # False
+    a_and_pos_length_and_b(true)("bb") # False
+    a_and_pos_length_and_b(true)("acb") # True
+    a_and_pos_length_and_b(true)(7) # Undefined, throws exception due to type mismatch
+</code></pre><p>When applied to another non-trivial predicate <code>P</code> like <code>lambda x: "dog" in x</code>, <code>a_and_pos_length_and_b_er</code> tacks on the additonal constrains to <code>P</code> specified by its component predicates! Hence the <code>_er</code> on the function name.</p><p>These predicate transformers are secretly an instance of the <a href="https://refactoring.guru/design-patterns/decorator">Decorator pattern</a> from your OO classes in college, even if they don't seem that way at first.</p><p>When I was taught this pattern, I learned it as something you do to classes. The purpose was to "decorate" a class with additional behavior.</p><p>However, decorators can be applied to a much more primitive concept in programming: functions! A <strong>decorator function</strong> is a higher-order function that takes a given type of function as input, adds some additional behavior to that function (perhaps by pre-processing the input, post-processing the output, logging the function's result, etc.), and then returns an altered function as output. In our case, the altered function is of the same type (<code>Predicate</code>), but this need not be the case.</p><p>Our predicate transformers fit right into this pattern by "decorating" a predicate with some additional constraints (or loosenings of current constraints).</p><h2 id="a-challenge">A Challenge</h2><p>Try writing a predicate transformer called <code>drop</code> that takes a compound predicate <code>P</code> and a predicate transformer to remove, and removes that predicate transformer from <code>P</code>.</p><p>For example:</p><pre><code class="python">    # Ex: 
+    P = lambda x: x.name == "Zola" and x.job == "Farmer"
+    named_zola = partial(and_, lambda x: x.name == "Zola")
+    is_farmer = partial(and_, lambda x: x.job == "Farmer")
+
+    # or expressed as a composition with our predicate transformers: 
+    P = comp(named_zola, is_farmer)(true)
+
+    def drop(p: Predicate, p_to_remove) -&gt; Predicate: 
+        ...
+
+    # desired result of drop(P, is_farmer) is a predicate transformer that behaves like `named_zola`.
+</code></pre><p>If this felt really hard, fear not! You actually can't simply "remove" a predicate like this once it's <code>and</code>-ed with another predicate. The main reason we can't do this is because we're only really able to interact with the <strong>composite predicate</strong> via operations like <code>and</code>, <code>or</code>, and <code>not</code>. We can't access the individual predicates + operations that make up the parent predicate; we can only tack stuff on after the fact.</p><p>What <code>drop</code> is leading us to do is consider our predicate as a <strong>data structure</strong> that we can manipulate (i.e. remove some elements from it in a sensible way).</p><p>So, let's reconsider our model of a composite predicate. We have so far represented this as a composite function built using our predicate transformers, but we have now hit its  limitations. The intended behavior of the <code>drop</code> function suggests that we should model our predicate as a list somehow so that we can get at:</p><ol><li>The sub-predicates which make up the composite</li><li>The operation used to glue all these subpredicates together (<code>and</code>s, <code>or</code>s, and <code>not</code>s.)</li></ol><p>There already exists a family of programming languages that achieves exactly what we're looking for: <strong>representing code as data.</strong></p><h2 id="enter-lisp">Enter: LISP</h2><p>LISP (LISt Processor) was invented by John McCarthy back in ~1960. It is a language whose code is written as a data structure: a series of nested lists termed <em>s-expressions</em>.</p><p>An s-expression is either an <em>atom</em> (like <code>5</code> or <code>cat</code>) or a list <code>(x y)</code> where <code>x</code>, <code>y</code> are s-expressions. The first element in the list is assumed to be a <em>function</em>, and the rest of the items are its arguments. For example, here's how a compound predicate might look in a modern LISP, Clojure:</p><pre><code class="clojure">(defn my-pred [x] (and (zero? x) (or (even? x) (pos? x))))
+;; this defines a function `my-pred` that takes an argument x and asks: is x zero, and is x positive or even? if so, return true, else false.
+</code></pre><p><em>Note:</em> I'll have to do something on the history of LISP bc it is an incredibly influential and beautiful language. For example, it introduced the notion of garbage collection, aka automatic memory management!</p><p>Let's take a page out of LISP's book and try representing our predicates as nested lists, where the first item in each (sub)list is the boolean operator we are using to glue the predicates together.</p><pre><code class="python">    # Here's that same expression, but in our new lispy thing!
+    def even(x): return x % 2 == 0
+    def pos(x):  return x &gt; 0
+    def zero(x): return x == 0 
+
+    p = [and_, zero, [or_, even, pos]]
+</code></pre><p>But now the question is: how do we actually evaluate our new representation of our compound predicate <code>p</code> on some input, say <code>5</code>?</p><p>We need to write a mini interpreter! Luckily, because of the uniform syntax of LISPs, this is suprisingly easy (compared to thinking about how you would write an interpreter for pretty much any other language syntax out there).</p><p>Try it yourself before looking at a solution below.</p><details><summary>Reveal!</summary>
+    ```python
+<pre><code>    def eval(expr): 
+        if not isinstance(expr, list): 
+        # we've hit something that is either a function or a plain value
+            return expr
+        else: 
+            if len(expr) == 0: 
+                raise SyntaxError("the predicate expression must have at least 1 element")
+            if len(expr) == 1: 
+                if callable(expr[0]): 
+                    raise SyntaxError(f"Please provide an argument to {expr[0]}")
+                raise SyntaxError(f"Expected function as the first argument. Got {expr[0]}, which is of type {type(expr[0])}")
+            if len(expr) == 2: 
+                if not callable(expr[0]): 
+                    raise SyntaxError(f"Expected function as the first argument. Got {expr[0]}, which is of type {type(expr[0])}")
+                return expr[0](eval(expr[1]))
+            if len(expr) == 3: 
+                if not callable(expr[0]): 
+                    raise SyntaxError(f"Expected function as the first argument. Got {expr[0]}, which is of type {type(expr[0])}")
+                return expr[0](eval(expr[1]), eval(expr[2]))
+            raise SyntaxError("Functions that take more than two arguments are not supported")
+```
+</code></pre></details><p>When evaluated on <code>p</code>, this yields a predicate that does exactly what we want!</p><pre><code class="python">    print([(i, eval(p)(i)) for i in range(-10, 10)])
+    
+    # [(-10, False),
+    # (-9, False),
+    # (-8, False),
+    # (-7, False),
+    # (-6, False),
+    # (-5, False),
+    # (-4, False),
+    # (-3, False),
+    # (-2, False),
+    # (-1, False),
+    # (0, True), &lt;&lt;- what we expected from the predicate!
+    # (1, False),
+    # (2, False),
+    # (3, False),
+    # (4, False),
+    # (5, False),
+    # (6, False),
+    # (7, False),
+    # (8, False),
+    # (9, False)]    
+</code></pre><p>The real upshot of this representation is that it is now pretty straightforward to define <code>drop</code> and other functions like it:</p><pre><code class="python">    def drop(expr, p_to_remove): 
+        if callable(expr[0]): 
+            if expr[0].__name__ == p_to_remove.__name__: 
+                return expr[1:]
+            return [expr[0]] + drop(expr[1:], p_to_remove)
+        return [expr[0]] +  drop(expr[1:], p_to_remove)
+
+    dropped_zero = drop(p, zero)
+    print(dropped_zero)
+    # [
+    #     &lt;function __main__.and_(p1, p2)&gt;,
+    #     [
+    #         &lt;function __main__.or_(p1, p2)&gt;,
+    #         &lt;function __main__.even(x)&gt;,
+    #         &lt;function __main__.pos(x)&gt;
+    #     ]
+    # ]
+
+    print([(i, eval(dropped_zero)(i)) for i in range(-10, 10)]
+
+    # [(-10, True), --&gt; you can be even (but not positive)
+    # (-9, False),
+    # (-8, True),
+    # (-7, False),
+    # (-6, True),
+    # (-5, False),
+    # (-4, True),
+    # (-3, False),
+    # (-2, True), 
+    # (-1, False),
+    # (0, True), 
+    # (1, True), --&gt; you can be positive (but not even)
+    # (2, True), --&gt; you can be even (and positive)
+    # (3, True), 
+    # (4, True),
+    # (5, True),
+    # (6, True),
+    # (7, True),
+    # (8, True),
+    # (9, True)]
+
+
+    # Nice :D 
+</code></pre><h2 id="powering-down">Powering Down</h2><p>To bring this full circle, let's summarize.</p><ul><li>We started out wanting to combine/manipulate predicates in a flexible way.</li><li>We assumed that since a predicate acts like a function, we have to model it using only functions.
+<ul><li>We used predicate transformers as a composable abstraction for building complex predicates</li><li>We ran up against an inability to access sub-predicates in a composite predicate, because all the sub-predicates were hidden in the parent function.</li></ul></li><li>Then we turned to creating a data structure that could explicitly model the compositional structure in our predicates.
+<ul><li>This (plus our <code>eval</code> method) allowed us to write a predicate transformer like <code>drop</code>, which wasn't possible before.</li></ul></li></ul><p>My major takeaways are:</p><ul><li>Function composition is a one-way operation.</li><li>Where we ended up demonstrates the power of modeling domain concepts as data structures (rather than procedures/functions/etc).</li></ul><p>That's it for now!! Next time, I'll talk about a particular predicate transformer that can give a semantics for a programming language called GCL.</p><p><em>Notes</em>:</p><ul><li>The way I've defined the interpreter for this LISP is not as general or extensible as it could be. For a more complete toy LISP designed to work with things other than predicates (i.e. lambdas, variables, etc.), I would highly recommend checking out <a href="https://michaelnielsen.org/ddi/lisp-as-the-maxwells-equations-of-software/">this awesome blog post</a> from Michael Nielsen.</li></ul>
+</div>
+
+<div id="post-tags">
+    <br/> 
+    <b>Tags: </b>
+    
+    <a href="/personal-site-v2/tags-output/higher-order%20functions/">higher-order functions</a>
+    
+    <a href="/personal-site-v2/tags-output/LISP/">LISP</a>
+    
+</div>
+
+<br/>
+
+    
+    
+    <div id="prev-next">
+        
+        
+        <a class="button right" href="/personal-site-v2/posts-output/2024-01-09/">First blog post! &raquo;</a>
+        
+    </div>
+</div>
+
+<hr/>
+<div id="footercont" class="clearfix">Copyright &copy; 2024 Daniel Cantwell
+    <p>Powered by <a href="http://cryogenweb.org">Cryogen</a> | Free Website Template by <a title="free website templates" href="http://www.downloadwebsitetemplates.co.uk" rel="external">Download Website Templates</a></p>
+
+</div>
+</div>
+<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+<script src="/personal-site-v2/js/highlight.pack.js" type="application/javascript"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="/personal-site-v2/js/scripts.js" type="application/javascript"></script>
+
+
+</body>
+</html>
