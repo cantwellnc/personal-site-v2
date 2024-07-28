@@ -10,7 +10,7 @@
     
     <title>Daniel Cantwell: Going on a tangent</title>
     
-<meta name="keywords" content="clojure,regular expressions">
+<meta name="keywords" content="regular expressions">
 
 <meta name="description" content="You ever write a regular expression and then wonder how the heck it determine its matches? how does it go from such a terse syntax like f[o]* to a little machine that determines &quot;YES, we&#39;re a match&quot; or &quot;NO, but oh well, there&#39;s more fish in the sea&quot;.">
 
@@ -42,6 +42,34 @@
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/tomorrow-night-eighties.min.css">
     <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous"> -->
+
+    <!-- The loading of KaTeX is deferred to speed up page rendering -->
+    <!-- <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script> -->
+
+    <!-- To automatically render math in text elements, include the auto-render extension: -->
+    <!-- <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script> -->
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+            // customised options
+            // • auto-render specific keys, e.g.:
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+            ],
+            // • rendering keys, e.g.:
+            throwOnError : false
+
+            });
+        });
+    </script>
+
 </head>
 <body>
 
@@ -89,25 +117,24 @@
     <h1>Going on a tangent</h1>
 </div>
 <div>
-    <ol class="toc"><li><a href="#primer-on-regular-expressions">Primer on regular expressions</a></li><li><a href="#the-brzozowski-derivative">The Brzozowski derivative</a></li><li><a href="#does-d-sr-deserve-to-be-called-a-derivative">Does $D_s(R)$ deserve to be called a derivative?</a></li></ol>
-    <!-- # Going on a tangent --><p>You ever write a regular expression and then wonder how the heck it determine its matches? how does it go from such a terse syntax like <code>f[o]*</code> to a little machine that determines "YES, we're a match" or "NO, but oh well, there's more fish in the sea".</p><p><span class="katex">blah</span></p><p>Well I did! And I found a particularly nice algorithm for determining if a regular expression matches a given input string. The two reasons I chose this algorithm are:</p><ol><li>It's very simple to understand, and the code expressing it is very short.</li><li>It relies on the concept of the <code>derivative</code> of a regular expression!</li></ol><p>The algorithm is simple to state:</p><ol><li>if the current string we're matching is empty (written $\epsilon$), and the regular expression we want to match against matches the empty string, then $s$ matches the regex $R$! Otherwise, it does not match.</li><li>If the string is non-empty, then we perform two replacements + run again:
-<ul><li>the current string is replaced by the the current string without the first character (ex: <span class="katex">blue \rightarrow lue</span>)</li><li>the current regex is replaced by the <strong>derivative</strong> of $R$ with respect to the first character in $s$ (ex: $R \rightarrow D_b(R)$, since $b$ is the first character in $blue$).</li></ul></li></ol><p>Ok, so what's this mysterious derivative?</p><p>In short: it is the regular expression that matches the same stuff as $R$, assuming that a given character (ex: $b$) has <strong>already been matched</strong> by $R$. You can think of it as the "tail" of the regular expression.</p><h2 id="primer-on-regular-expressions">Primer on regular expressions</h2><p>Given:</p><ul><li>a string <code>$s$</code> to match, say "blue"</li><li>a regular expression $R$ that will compute a match, say $b(l|o)u(e|t)(s)*$
-<ul><li>recall: the $|$ operator is alternation (aka "choice"), and $*$ is iteration. The above regex could match $bout$, $blue$, $blot$, $boue$, as well as all of these variations ending in ANY number of $s$'s (ex: $bluessssssss$).</li><li>In addition to all those operations, we are doing one other sneaky one: concatenating several regexes together to form $R$! The characters $b$, $l$, $o$, $u$, $e$, $t$ are each very simple regexes that ONLY match that one character, and we can concat them together to form a regex that matches the first thing, then the second thing, then the third thing, etc.!</li></ul></li></ul><p>then we want to determine if $s$ is recognized by $R$. To do this, we can slightly more formally define $R$ as representing the <strong>set of all the strings</strong> (drawn from a particular alphabet) <strong>that it matches</strong><span strings="" t="">:
-$$
-R := { \text</span><span t="" is="" matched="" by="" r="" and=""> | \text</span> t \in \Sigma \text{ (our alphabet)} }
-$$.</p><p>Example (where $\Sigma = {a,b,c,d,e,...,z}$):
-$$</p><p>b(l|o)u(e|t)(s)* = {
+    <ol class="toc"><li><a href="#primer-on-regular-expressions">Primer on regular expressions</a></li><ol><li><a href="#example-where-sigma--abcdez-and-the-regular-expression-is-blouets">Example (where $\Sigma = {a,b,c,d,e,...,z}$) and the regular expression is $b(l|o)u(e|t)(s)*$:</a></li></ol><li><a href="#the-brzozowski-derivative">The Brzozowski derivative</a></li><ol><li><a href="#example-r--dogt-s--dog">Example: $R = do(g|t)$, $s = dog$</a></li></ol><li><a href="#why-is-this-thing-called-a-derivative">Why is this thing called a derivative?</a></li><li><a href="#back-to-the-algorithm">Back to the algorithm</a></li></ol>
+    <!-- # Going on a tangent --><p>You ever write a regular expression and then wonder how the heck it determine its matches? how does it go from such a terse syntax like <code>f[o]*</code> to a little machine that determines "YES, we're a match" or "NO, but oh well, there's more fish in the sea".</p><p>Well I did, and I found a particularly nice algorithm for determining if a regular expression matches a given input string! The two reasons I chose this algorithm are:</p><ol><li>It's very simple to understand, and the code expressing it is very short.</li><li>It relies on the concept of the <code>derivative</code> of a regular expression, which I didn't even know existed.</li></ol><p>The algorithm is simple to state:</p><ol><li>if the current string we're matching is empty (written $\epsilon$), and the regular expression we want to match against matches the empty string, then $s$ matches the regex $R$! Otherwise, it does not match.</li><li>If the string is non-empty, then we perform two replacements + run again:
+<ul><li>the current string is replaced by the the current string without the first character (ex: $blue \rightarrow lue$)</li><li>the current regex is replaced by the <strong>derivative</strong> of $R$ with respect to the first character in $s$ (ex: $R \rightarrow D_b(R)$, since $b$ is the first character in $blue$).</li></ul></li></ol><p>Ok, so what's this mysterious derivative?</p><p>In short: it is the regular expression that matches the same stuff as $R$, assuming that a given character (ex: $b$) has <strong>already been matched</strong> by $R$. You can think of it as the "tail" of the regular expression.</p><h2 id="primer-on-regular-expressions">Primer on regular expressions</h2><p>Given:</p><ul><li>a string $s$ to match, say "blue"</li><li>a regular expression $R$ that will compute a match, say $b(l|o)u(e|t)(s)*$
+<ul><li>recall: the $|$ operator is alternation (aka "choice"), and $*$ is iteration. The above regex could match $bout$, $blue$, $blot$, $boue$, as well as all of these variations ending in ANY number of $s$'s (ex: $bluessssssss$).</li><li>In addition to all those operations, we are doing one other sneaky one: concatenating several regexes together to form $R$! The characters $b$, $l$, $o$, $u$, $e$, $t$ are each very simple regexes that ONLY match that one character, and we can concat them together to form a regex that matches the first thing, then the second thing, then the third thing, etc.!</li></ul></li></ul><p>then we want to determine if $s$ is recognized by $R$. To do this, we can slightly more formally define $R$ as representing the <strong>set of all the strings</strong> (drawn from a particular alphabet) <strong>that it matches</strong>:
+$$R := \{  t | \text{ $R$ matches t and } t \in \Sigma \}$$</p><h3 id="example-where-sigma--abcdez-and-the-regular-expression-is-blouets">Example (where $\Sigma = {a,b,c,d,e,...,z}$) and the regular expression is $b(l|o)u(e|t)(s)*$:</h3><p>$$
+b(l|o)u(e|t)(s)* = \{
 bout, blue, blot, boue, bouts, blues, blots, boues, boutss, bluess, blotss, bouess, boutsss, bluesss, blotsss, bouesss, ...
-}</p><p>$$</p><p>We will also need a notion of the <strong>empty</strong> regex $\empty$, which is the regex that matches nothing:</p><p>$$
-\empty := \text{the empty set, confusingly also written } \empty <br />
-$$</p><p>This is distinct from the regex that matches the empty string $\epsilon$. This regular expression is also written as $\epsilon$:</p><p>$$
-\epsilon := { \epsilon } <br />
+\}
+$$</p><p>We will also need a notion of the <strong>empty</strong> regex $\empty$, which is the regex that matches nothing:</p><p>$$
+\empty := \text{the empty set, confusingly also written } \empty
+$$</p><p>This is <strong>NOT THE SAME THING</strong> from the regex that matches the empty string $\epsilon$. This regular expression is also written as $\epsilon$:</p><p>$$
+\epsilon := \{ \epsilon \}
 $$</p><h2 id="the-brzozowski-derivative">The Brzozowski derivative</h2><p>With this more concrete definition of a regex, then the <strong>Brzozowski derivative</strong> of $R$ with respect to a character $a$ is</p><p>$$
-D_a(R) := {\text{ } b \text{ } | \text{ } ab \in R \text{ }}
-$$</p><p>In other words, it is the regex that matches everything $R$ would have if $a$ had already been matched.</p><p>To compute this, Brzozowski came up with a recursive way of expressing $D_a(R)$:</p><p><span if="">$$D_a(\empty) = \empty$$
+D_a(R) := \{\text{ } b \text{ } | \text{ } ab \in R \text{ }\}
+$$</p><p>In other words, it is the regex that matches everything $R$ would have if $a$ had already been matched.</p><p>To compute this, Brzozowski came up with a recursive way of expressing $D_a(R)$:</p><p>$$D_a(\empty) = \empty$$
 $$D_a(\epsilon) = \empty$$
 $$D_a(a) = \epsilon $$
-$$D_a(a') = \empty \text</span> a \neq a' $$
+$$D_a(a') = \empty \text{ if } a \neq a' $$
 $$D_a(R_1 R_2) = δ(R_1) D_a(R_2) \text{ }  | \text{ } D_a(R_1) \text{ }  R_2 $$
 $$D_a(R_1 \text{ } | \text{ }  R_2) = D_a(R_1)\text{ } | \text{ } D_a(R_2)$$
 $$D_a(R*) = D_a(R) R*$$</p><p>Note that the "product" rule also uses a function $\delta$. This function is a helper, and it just determines if its argument accepts the empty string pattern $\epsilon$. If it doesn't, then it returns the null pattern $\empty$:</p><p>$$\delta(\empty) = \empty$$
@@ -115,39 +142,28 @@ $$\delta(\epsilon) = \epsilon$$
 $$\delta(a) = \empty$$
 $$\delta(R_1 R_2) = \delta(R_1)\delta(R_2)$$
 $$\delta(R_1 \text{ } | \text{ } R_2) =\delta(R_1) \text{ } | \text{ } \delta(R_2) $$
-$$\delta(R *) = \epsilon$$</p><p>This is a lot of rules, and they are best understood through some examples, so let's get on with that.</p><p>Ex: $R = do(g|t)$, $s = dog$
-First we have to apply the product rule, since we have a concatenation of 3 regexes.</p><p>$$
+$$\delta(R *) = \epsilon$$</p><p>This is a lot of rules, and they are best understood through some examples, so let's get on with that.</p><hr /><h3 id="example-r--dogt-s--dog">Example: $R = do(g|t)$, $s = dog$</h3><p>Let's try and compute $D_d(R)$ to get a feel for how to apply the rules above.</p><p>First we have to apply the product rule, since we have a concatenation of 3 regexes.</p><p>$$
 D_d(do(g|t)) = \delta(d) D_d(o(g|t)) \text{ } | \text{ } D_d(d) \text{ }  (o(g|t))
-$$</p><p>The RHS of the alternation is simpler, so let's tackle that first:</p><p>$$
+$$</p><p>The RHS of the alternation is the more imporant piece, so let's tackle that first:</p><p>$$
 D_d(d) \text{ }  (o(g|t)) = \epsilon \text{ } (o(g|t)) = o(g|t)
 $$</p><p>On the LHS of the |:</p><p>$$
-\empty \text{ } D_d(o(g|t))
-$$</p><p>$$
-D_d(do(g|t)) = \delta(d) D_d(o(g|t)) \text{ } | \text{ } D_d(d) \text{ }  (o(g|t))
-$$</p><p>$$
-D_d(do(g|t)) = o(g|t)
+\delta(d) D_d(o(g|t)) \text{ } = \empty \text{ } D_d(o(g|t)) = \empty
+$$</p><p>because <strong>NO</strong> strings are accepted by $\empty$, so if it appears at the beginning of a concatenation like it does here, it overrules any matches that may have happened in the rest of the regex.</p><p>Putting the LHS + RHS together, we find that</p><p>$$
+D_d(do(g|t)) = o(g|t) \text{ } | \text{ } \empty = o(g|t)
+$$</p><p>This is exactly the <em>subset</em> of strings in the set represented by $do(g|t)$
+that are suffixes of $d$!</p><hr /><h2 id="why-is-this-thing-called-a-derivative">Why is this thing called a derivative?</h2><p>Every sufficiently nice function can be approximated by its <a href="https://en.wikipedia.org/wiki/Taylor_series">Taylor series</a>, and in some cases, the function is <em>exactly</em> equal to its infinite Taylor series.</p><p>In other words, the function's derivatives carry information about the original function, and bundling them together
+in the above sense represents the behavior of the function.</p><p>$$
+f(a) \approx \sum_{ n=0 }^\infty \text{ (n-th derivative of f at a) } * g(x, a, n)
 $$
-$$
-D_o(o(g|t)) = (g|t)
-$$</p><p>Oh no! How are we supposed to deal with alternation?</p><p>Brzozowski tells us!
-$$
-D_c(re_1 | re_2) = D_c(re_1) | D_c(re_2)
-$$</p><p>So now $D_g((g|t)) = D_g(g) | D_g(t)$</p><h2 id="does-d-sr-deserve-to-be-called-a-derivative">Does $D_s(R)$ deserve to be called a derivative?</h2><p>Every sufficiently nice function can be approximated by its <a href="https://en.wikipedia.org/wiki/Taylor_series">Taylor series</a>, and in some cases, the function is <em>exactly</em><span n="0"> equal to its infinite Taylor series:
-$$
-\displaystyle f(x) \approx \sum_</span><sup>\infty\ a_n \frac{(x-b)</sup>n}{n!}
-$$
-where the coefficients $a_n$ are the n-th order derivatives of $f$, and b is some point where $f$ is n-times differentiable (so that taking the n-th derivative makes sense):</p><p><span dx="">$$
-a_n = \frac{d^k }</span>f(b)
-$$</p><p>Working with a truncated Taylor expansion of $f$ instead of $f$ itself is a well-known trick, since it approximates a potentially complicated function by a polynomial. If f returns some value when provided with x, then a Taylor approximation is only ever off by a quantifiable amount.</p><p>But why bother using an approximation? Well, we've all had to do really hairy integrals before (or other complicated operations on functions). Doing any sort of calculations (more derivatives, integration, etc.) when working with a Taylor approximation is way easier, since operations like integration can be performed with ease on polynomials!</p><p>Mathematical functions aren't the only thing that can benefit from this perspective! A famous saying in computer science is:</p><pre><code>Some people, when confronted with a problem, think
-“I know, I'll use regular expressions.”   Now they have two problems.
-</code></pre>
+where $g(x, a, n)$ is some function g that depends on $x,a,n$.</p><p>In his <a href="https://dl.acm.org/doi/pdf/10.1145/321239.321249">original 1964 paper</a>, Brzozowski showed that every regular expression has a similar represenation in terms of its derivatives. <strong>Note:</strong> his notation for alternation is $+$, so
+when you look at the following, read the sums as alternations of regexes.</p><p>$$
+\text{Every regular expression R can be written as  } R = \delta(R) + \sum_{ a \in \Sigma } aD_a(R)
+$$</p><p>This is sort of like an analogue of Taylor's theorem, but for regexes! A regex is "approximated" in the above sense by its derivatives. They give subsets of the total set of matches that the regex $R$ yields, and as you add more and more of those together via $|$, you gather enough options to eventually reconstruct the original regex.</p><h2 id="back-to-the-algorithm">Back to the algorithm</h2><p>With the above intution in hand, we can understand a little better why the matching algorithm works. If a regular expression is represented by its derivatives and we iteratively apply the derivative to $R$ (w.r.t. the current character we are looking at in the string $s$), then we should be construcing a descending chain of subsets of strings in our alphabet $\Sigma$, which should end in an empty set <strong>exactly</strong> when we run out of characters in $s$.</p><p>I ported <a href="https://matt.might.net/articles/implementation-of-regular-expression-matching-in-scheme-with-derivatives/">Matt Might's implementation</a> to Clojure <a href="">here</a>, and it works pretty well!</p><p>The performance of the naive implementation is not great, but it is a truly beautiful and simple algorithm to understand once you get what the Brzozowski derivative does to a regex.</p>
 </div>
 
 <div id="post-tags">
     <br/> 
     <b>Tags: </b>
-    
-    <a href="/personal-site-v2/tags-output/clojure/">clojure</a>
     
     <a href="/personal-site-v2/tags-output/regular%20expressions/">regular expressions</a>
     
