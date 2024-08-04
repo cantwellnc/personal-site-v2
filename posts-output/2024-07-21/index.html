@@ -10,7 +10,7 @@
     
     <title>Daniel Cantwell: Going on a tangent</title>
     
-<meta name="keywords" content="regular expressions">
+<meta name="keywords" content="regular expressions,higher-order functions,LISP,first">
 
 <meta name="description" content="You ever write a regular expression and then wonder how the heck it determine its matches? how does it go from such a terse syntax like f[o]* to a little machine that determines &quot;YES, we&#39;re a match&quot; or &quot;NO, but oh well, there&#39;s more fish in the sea&quot;.">
 
@@ -93,6 +93,10 @@
             <li ><a title="Tags" href="/personal-site-v2/tags/">Tags</a></li>
             
             
+            <li >
+                <a href="/personal-site-v2/pages-output/about/">About</a>
+            </li>
+            
             <li><a title="RSS" href="/personal-site-v2/feed.xml">RSS</a></li>
         </ul>
     </div>
@@ -117,7 +121,7 @@
     <h1>Going on a tangent</h1>
 </div>
 <div>
-    <ol class="toc"><li><a href="#primer-on-regular-expressions">Primer on regular expressions</a></li><ol><li><a href="#example-where-sigma--abcdez-and-the-regular-expression-is-blouets">Example (where $\Sigma = {a,b,c,d,e,...,z}$) and the regular expression is $b(l|o)u(e|t)(s)*$:</a></li></ol><li><a href="#the-brzozowski-derivative">The Brzozowski derivative</a></li><ol><li><a href="#example-r--dogt-s--dog">Example: $R = do(g|t)$, $s = dog$</a></li></ol><li><a href="#why-is-this-thing-called-a-derivative">Why is this thing called a derivative?</a></li><li><a href="#back-to-the-algorithm">Back to the algorithm</a></li></ol>
+    <ol class="toc"><li><a href="#primer-on-regular-expressions">Primer on regular expressions</a></li><ol><li><a href="#example-where-sigma--abcdez-and-the-regular-expression-is-blouets">Example (where $\Sigma = {a,b,c,d,e,...,z}$) and the regular expression is $b(l|o)u(e|t)(s)*$:</a></li></ol><li><a href="#the-brzozowski-derivative">The Brzozowski derivative</a></li><ol><li><a href="#example-r--dogt-s--dog">Example: $R = do(g|t)$, $s = dog$</a></li></ol><li><a href="#why-is-this-thing-called-a-derivative">Why is this thing called a derivative?</a></li><li><a href="#back-to-the-algorithm">Back to the algorithm</a></li><li><a href="#more">More</a></li></ol>
     <!-- # Going on a tangent --><p>You ever write a regular expression and then wonder how the heck it determine its matches? how does it go from such a terse syntax like <code>f[o]*</code> to a little machine that determines "YES, we're a match" or "NO, but oh well, there's more fish in the sea".</p><p>Well I did, and I found a particularly nice algorithm for determining if a regular expression matches a given input string! The two reasons I chose this algorithm are:</p><ol><li>It's very simple to understand, and the code expressing it is very short.</li><li>It relies on the concept of the <code>derivative</code> of a regular expression, which I didn't even know existed.</li></ol><pre><code class="clojure">    (defn regex-match
     [pattern data] 
     (if (empty? data)
@@ -163,7 +167,7 @@ $$
 where $g(x, a, n)$ is some function g that depends on $x,a,n$.</p><p>In his <a href="https://dl.acm.org/doi/pdf/10.1145/321239.321249">original 1964 paper</a>, Brzozowski showed that every regular expression has a similar representation in terms of its derivatives. <strong>Note:</strong> his notation for alternation is $+$, so
 when you look at the following, read the sums as alternations of regexes.</p><p>$$
 \text{Every regular expression R can be written as  } R = \delta(R) + \sum_{ a \in \Sigma } aD_a(R)
-$$</p><p>This is sort of like an analogue of Taylor's theorem, but for regexes! A regex is "approximated" in the above sense by its derivatives. They give subsets of the total set of matches that the regex $R$ yields, and as you add more and more of those together via $|$, you gather enough options to eventually reconstruct the original regex.</p><h2 id="back-to-the-algorithm">Back to the algorithm</h2><p>With the above intution in hand, we can understand a little better why the matching algorithm works. If a regular expression is represented by its derivatives and we iteratively apply the derivative to $R$ (w.r.t. the current character we are looking at in the string $s$), then we should be construcing a descending chain of subsets ($S_1 \subseteq S2 \subseteq S3 \subseteq ... $) of strings in our alphabet $\Sigma$, which should end in an empty set <strong>exactly</strong> when we run out of characters in $s$.</p><p>I ported <a href="https://matt.might.net/articles/implementation-of-regular-expression-matching-in-scheme-with-derivatives/">Matt Might's implementation</a> to Clojure <a href="https://github.com/cantwellnc/parsing-with-derivatives">here</a>, and it works pretty well!</p><p>The performance of the naive implementation is not great, but it is a truly beautiful and simple algorithm to understand once you get what the Brzozowski derivative does to a regex.</p>
+$$</p><p>This is sort of like an analogue of Taylor's theorem, but for regexes! A regex is "approximated" in the above sense by its derivatives. They give subsets of the total set of matches that the regex $R$ yields, and as you add more and more of those together via $|$, you gather enough options to eventually reconstruct the original regex.</p><p>In fact, he shows that over a fixed alphabet $\sigma$, every regex $R$ only has <strong>finitely many unique derivatives $d_R$</strong>. He terms these $R$'s <em>characteristic derivatives</em>. So, most of the terms in the above representation can be ignored. If we want, we can express $R$ purely in terms of an alternation of its characteristic derivatives.</p><h2 id="back-to-the-algorithm">Back to the algorithm</h2><p>With the above intution in hand, we can understand a little better why the matching algorithm works. If a regular expression is represented by its derivatives and we iteratively apply the derivative to $R$ (w.r.t. the current character we are looking at in the string $s$), then we should be construcing a descending chain of subsets ($S_1 \subseteq S2 \subseteq S3 \subseteq ... $) of strings in our alphabet $\Sigma$, which should end in an empty set <strong>exactly</strong> when we run out of characters in $s$.</p><p>I ported <a href="https://matt.might.net/articles/implementation-of-regular-expression-matching-in-scheme-with-derivatives/">Matt Might's implementation</a> to Clojure <a href="https://github.com/cantwellnc/parsing-with-derivatives">here</a>, and it works pretty well! I'd highly recommend going and playing with that code to get a feel for how the parsing algorithm works.</p><p>The performance of the naive implementation is not great, but it is a truly beautiful and simple algorithm to understand once you get what the Brzozowski derivative does to a regex.</p><h2 id="more">More</h2><ul><li>In the original paper, he defines the derivative for <strong>any</strong> boolean connective $f(P,Q)$, not just alternation. The value of $\delta$ on $f$ might be more complicated to derive, but it is possible in terms of other basic connectives. He gives many examples of what f could be: intersection, set complement, xor, etc.</li><li>The original paper also goes into how to construct state machines that accept strings from $R$ using its characteristic derivatives. If you want more info on how this works, I'll probably be writing a follow-up post on how this works too.</li></ul>
 </div>
 
 <div id="post-tags">
@@ -178,6 +182,8 @@ $$</p><p>This is sort of like an analogue of Taylor's theorem, but for regexes! 
 
     <div id="prev-next">
         
+        
+        <a class="right button" href="/personal-site-v2/posts-output/2024-01-12/">Questions in Questions &raquo;</a>
         
     </div>
 
